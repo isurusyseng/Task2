@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Cloudformation Template to Create the Service'
+Resources:
+  TaskDefinition:
+   Type: AWS::ECS::TaskDefinition
+   Properties:
+    Family: sample-task
+    ContainerDefinitions:
+    - Name: Sample-Server
+      Cpu: '512'
+      Essential: 'true'
+      Image: 'xxxxxx.dkr.ecr.us-east-1.amazonaws.com/xxxxx:latest'
+      Memory: '512'
+      PortMappings:
+      - ContainerPort: 80
+        HostPort: 80
+  Service:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: 'Sample-Cluster'
+      DesiredCount: '1'
+      TaskDefinition: !Ref 'TaskDefinition'

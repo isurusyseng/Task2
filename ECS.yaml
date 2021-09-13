@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Cloudformation Template to create the ECS Cluster'
+Resources:
+
+  PublicSubnetAZ1:
+    Type: String
+
+  PublicSecurityGroup:
+    Type: String
+
+  ECSKeyName:
+    Type: 'String'
+
+  ECSCluster:
+   Type: AWS::ECS::Cluster
+   Properties:
+    ClusterName: 'Sample-Cluster'
+  EC2InstanceProfile:
+   Type: AWS::IAM::InstanceProfile
+   Properties:
+    Path: /
+    Roles: [!Ref 'EC2Role']
+  ECSAutoScalingGroup:
+   Type: AWS::AutoScaling::AutoScalingGroup
+   Properties:
+    VPCZoneIdentifier:
+      Ref: PublicSubnetAZ1
+    LaunchConfigurationName: !Ref 'ECSAutoscalingLC'
+    MinSize: '1'
+    MaxSize: '2'
+    DesiredCapacity: '1'
+  ECSAutoscalingLC:
+   Type: AWS::AutoScaling::LaunchConfiguration
+   Properties:
+    AssociatePublicIpAddress: true
+    ImageId: 'ami-03fe4d5b1d229063a'
+    SecurityGroups:
+      Ref: PublicSecurityGroup
+    InstanceType: 't2.micro'
+    IamInstanceProfile: !Ref 'EC2InstanceProfile'
+    KeyName:
+     Ref: ECSKeyName
+    UserData:
+      Fn::Base64: !Sub |
+        #!/bin/bash
+        echo ECS_CLUSTER=Sample-Cluster >> /etc/ecs/ecs.config
+  EC2Role:
+   Type: AWS::IAM::Role
+   Properties:
+    AssumeRolePolicyDocument:
+      Statement:
+      - Effect: Allow
+        Principal:
+          Service: [ 'ec2.amazonaws.com' ]
+        Action: [ 'sts:AssumeRole' ]
+    Path: /
+  ECSServicePolicy:
+   Type: "AWS::IAM::Policy"
+   Properties:
+    PolicyName: "AmazonECS_Custom_Role"
+    PolicyDocument:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Action: ['ecs:*', 'logs:*', 'ecr:*', 's3:*']
+          Resource: '*'
+    Roles: [!Ref 'EC2Role']

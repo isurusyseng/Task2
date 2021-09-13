@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Cloudformation Template to Deploy a Micro-Service'
+
+Resources:
+  Infrastack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://xxxx.s3.us-east-1.amazonaws.com/Infra.yaml
+
+  ECSstack:
+    DependsOn: Infrastack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://xxx.s3.us-east-1.amazonaws.com/ECS.yaml
+      Parameters:
+        ECSKeyName: "samplekey"
+        PublicSecurityGroup:
+          Fn::GetAtt:
+            - Infrastack
+            - Outputs.PublicSecurityGroup
+        PublicSubnetAZ1:
+          Fn::GetAtt:
+            - Infrastack
+            - Outputs.PublicSubnetAZ1
+
+  Servicestack:
+    DependsOn: ECSstack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://xxxx.s3.us-east-1.amazonaws.com/Service.yaml
